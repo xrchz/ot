@@ -1,10 +1,21 @@
 import qualified Data.Map as Map (empty)
-import Data.String (String)
 import Control.Monad.State (liftIO,evalStateT)
 import Control.Monad.Error (throwError)
 import System.IO (stdin,stdout)
-import Prelude hiding (getLine)
-import OpenTheory
+import Prelude hiding (getLine,map)
+import OpenTheory.Name (Name(..))
+import OpenTheory.Term (Term(..),Var(..),Const(..),rand,rator)
+import OpenTheory.Type ((-->))
+import OpenTheory.Equality (rhs)
+import OpenTheory.Proof (Proof(Refl,AppThm),axiom,concl)
+import OpenTheory.Rule (trans,spec,subs)
+import OpenTheory.Conv (depthConv)
+import OpenTheory.Bool (forall)
+import OpenTheory.Natural (nsNum,num,eq)
+import OpenTheory.Read (ReadState(ReadState),readTerm)
+import qualified OpenTheory.Read as R (ReadState(..))
+import OpenTheory.Write (WriteState(WriteState),logThm,logRawLn)
+import qualified OpenTheory.Write as W (WriteState(..))
 
 data Norrish =
     NZero
@@ -27,15 +38,15 @@ binc BZero = th2
 binc (BBit0 n) = spec (b2t n) th3
 binc (BBit1 n) = subs 1 (binc n) (spec (b2t n) th4)
 
-th1 = mkAxiom (forall vn (eqn (bit2 n) (suc (bit1 n))))
-th2 = mkAxiom (eqn (suc zero) (bit1 zero))
-th3 = mkAxiom (forall vn (eqn (suc (bit0 n)) (bit1 n)))
-th4 = mkAxiom (forall vn (eqn (suc (bit1 n)) (bit0 (suc n))))
+th1 = axiom (forall vn (eq (bit2 n) (suc (bit1 n))))
+th2 = axiom (eq (suc zero) (bit1 zero))
+th3 = axiom (forall vn (eq (suc (bit0 n)) (bit1 n)))
+th4 = axiom (forall vn (eq (suc (bit1 n)) (bit0 (suc n))))
 
 vn = Var (Name ([],"n"),num)
 n  = VarTerm vn
 
-bit_tm s = ConstTerm (Const (numns ("bit"++s))) (fn num num)
+bit_tm s = ConstTerm (Const (nsNum ("bit"++s))) (num --> num)
 bit0_tm = bit_tm "0"
 bit1_tm = bit_tm "1"
 bit2_tm = bit_tm "2"
@@ -43,8 +54,8 @@ bit0 = AppTerm bit0_tm
 bit1 = AppTerm bit1_tm
 bit2 = AppTerm bit2_tm
 
-zero = ConstTerm (Const (numns "zero")) num
-suc  = AppTerm (ConstTerm (Const (numns "suc")) (fn num num))
+zero = ConstTerm (Const (nsNum "zero")) num
+suc  = AppTerm (ConstTerm (Const (nsNum "suc")) (num --> num))
 
 -- Norrish -> Term
 n2t NZero = zero
@@ -75,5 +86,5 @@ main = evalStateT c rs where
               Right th -> logThm th
               Left err -> logRawLn err
     liftIO $ evalStateT m ws
-  ws = WriteState {whandle=stdout, wmap=Map.empty}
-  rs = ReadState {rhandle=stdin, rmap=Map.empty, stack=[], thms=[]}
+  ws = WriteState {W.handle=stdout, W.map=Map.empty}
+  rs = ReadState {R.handle=stdin, R.map=Map.empty, R.stack=[], R.thms=[]}
