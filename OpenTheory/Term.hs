@@ -2,9 +2,10 @@ module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,s
 import Data.Set (Set)
 import qualified Data.Set as Set (singleton,empty,union,delete,unions,member)
 import Data.Map (Map,findWithDefault,delete,singleton,elems,insert)
-import OpenTheory.Name (Name(Name))
+import OpenTheory.Name (Name(Name),nsMin)
 import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
+import Prelude hiding (lex)
 
 newtype Var = Var (Name, Type)
   deriving (Eq, Ord)
@@ -17,14 +18,35 @@ data Term =
   | AppTerm Term Term
   | ConstTerm Const Type
   | VarTerm Var
-  deriving Ord
+
+lex :: Ordering -> Ordering -> Ordering
+lex EQ o2 = o2
+lex o1 _  = o1
+
+instance Ord Term where
+  compare (AbsTerm v1 t1) (AbsTerm v2 t2) | v1 == v2 = compare t1 t2
+  compare (AbsTerm v1@(Var(_,ty1)) t1) (AbsTerm v2@(Var(_,ty2)) t2) | ty1 == ty2 =
+    compare (subst (singleton v1 v3) t1) (subst (singleton v2 v3) t2) where
+      v3 = VarTerm $ variant avoid (Var (nsMin"",ty1))
+      avoid = Set.union
+                (Set.delete v1 (freeVars t1))
+                (Set.delete v2 (freeVars t2))
+  compare (AbsTerm v1 _) (AbsTerm v2 _) = compare v1 v2
+  compare (AbsTerm _  _ ) _               = LT
+  compare (AppTerm _  _ ) (AbsTerm _  _ ) = GT
+  compare (AppTerm f1 x1) (AppTerm f2 x2) = lex (compare f1 f2) (compare x1 x2)
+  compare (AppTerm _  _ ) _               = LT
+  compare (ConstTerm _ _) (AbsTerm _ _) = LT
+  compare (ConstTerm _ _) (AppTerm _ _) = LT
+  compare (ConstTerm c1 t1) (ConstTerm c2 t2) = lex (compare c1 c2) (compare t1 t2)
+  compare (ConstTerm _ _) _ = LT
+  compare (VarTerm _) (AbsTerm _ _) = LT
+  compare (VarTerm _) (AppTerm _ _) = LT
+  compare (VarTerm _) (ConstTerm _ _) = LT
+  compare (VarTerm v1) (VarTerm v2) = compare v1 v2
 
 instance Eq Term where
-  AbsTerm v1 t1 == AbsTerm v2 t2 = t1 == subst (singleton v2 (VarTerm v1)) t2
-  AppTerm f1 x1 == AppTerm f2 x2 = f1 == f2 && x1 == x2
-  ConstTerm c1 t1 == ConstTerm c2 t2 = c1 == c2 && t1 == t2
-  VarTerm v1 == VarTerm v2 = v1 == v2
-  _ == _ = False
+  t1 == t2 = compare t1 t2 == EQ
 
 instance Show Var where
   show (Var(n,ty)) = "("++(show n)++":"++(show ty)++")"
