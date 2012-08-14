@@ -1,5 +1,7 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
-import Data.Map (Map,findWithDefault,delete,singleton)
+import Data.Set (Set)
+import qualified Data.Set as Set (singleton,empty,union,delete,unions,member)
+import Data.Map (Map,findWithDefault,delete,singleton,elems,insert)
 import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
@@ -53,11 +55,27 @@ rand :: Term -> Term
 rand (AppTerm _ x) = x
 rand tm = error ("rand " ++ show tm)
 
+freeVars :: Term -> Set Var
+freeVars (VarTerm v) = Set.singleton v
+freeVars (ConstTerm _ _) = Set.empty
+freeVars (AppTerm t1 t2) = Set.union (freeVars t1) (freeVars t2)
+freeVars (AbsTerm v b) = Set.delete v (freeVars b)
+
+vary :: Var -> Var
+vary (Var (Name(ns,n),ty)) = Var (Name(ns,n++"'"),ty)
+
+variant :: Set Var -> Var -> Var
+variant avoid = f where
+  f v | Set.member v avoid = f (vary v)
+  f v = v
+
 subst :: Map Var Term -> Term -> Term
 subst s v@(VarTerm k) = findWithDefault v k s
 subst _ c@(ConstTerm _ _) = c
 subst s (AppTerm t1 t2) = AppTerm (subst s t1) (subst s t2)
-subst s (AbsTerm v b) = AbsTerm v (subst (delete v s) b)
+subst s (AbsTerm v b) = AbsTerm v' (subst s' b) where
+  v' = variant (Set.unions (map freeVars (elems s))) v
+  s' = if v == v' then delete v s else insert v (VarTerm v') s
 
 varSubstType :: Map Name Type -> Var -> Var
 varSubstType s (Var (n,ty)) = Var (n,Type.subst s ty)
