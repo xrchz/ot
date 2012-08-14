@@ -11,13 +11,14 @@ import Data.Dynamic (Dynamic)
 import Control.Exception (Exception,try,throwIO,throw,catch)
 import Control.Monad.State (StateT,get,put,liftIO)
 import System.IO (Handle,hGetLine)
+import OpenTheory.Name (Name(Name))
+import OpenTheory.Type (Type(..),TypeOp(TypeOp))
+import OpenTheory.Term (Term(..),Var(Var),Const(Const),rand)
+import OpenTheory.Proof (Proof(Assume,AbsThm,EqMp,Refl,Subst,AppThm,DeductAntisym,BetaConv))
+import OpenTheory.Object (Object(..))
+import OpenTheory.Rule (proveHyp)
 import Prelude hiding (log,map,getLine,catch)
-import OpenTheory.Name
-import OpenTheory.Type
-import OpenTheory.Term
-import OpenTheory.Proof
-import OpenTheory.Object
-import OpenTheory.Rule
+
 data ReadState = ReadState {handle :: Handle, map :: Map Int Object, stack :: [Object], thms :: [Proof]}
 
 type RM = StateT ReadState IO

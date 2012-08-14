@@ -2,11 +2,11 @@ module OpenTheory.Proof (Proof(..),concl,hyp,axiom) where
 import Data.Set (Set)
 import qualified Data.Set as Set (empty,union,delete,singleton)
 import Data.Map (Map,singleton)
-import OpenTheory.Name
-import OpenTheory.Type hiding (subst)
-import OpenTheory.Term hiding (subst)
+import OpenTheory.Name (Name())
+import OpenTheory.Type (Type(OpType),(-->),bool)
+import OpenTheory.Term (Term(AppTerm,AbsTerm),Var(Var),typeOf,substType)
 import qualified OpenTheory.Term as Term (subst)
-import OpenTheory.Equality
+import OpenTheory.Equality (eq,rhs)
 
 data Proof =
     AbsThm Var Proof

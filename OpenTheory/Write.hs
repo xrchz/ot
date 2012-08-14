@@ -7,11 +7,11 @@ import Control.Monad.State (StateT,get,put,liftIO)
 import System.IO (Handle,hPutStr,hPutStrLn)
 import qualified Data.List as List (map)
 import Prelude hiding (log,map)
-import OpenTheory.Name
-import OpenTheory.Type
-import OpenTheory.Term
-import OpenTheory.Proof
-import OpenTheory.Object
+import OpenTheory.Name (Name(Name),logNamespace,logComponent)
+import OpenTheory.Type (Type(..),TypeOp(TypeOp))
+import OpenTheory.Term (Term(..),Var(Var),Const(Const))
+import OpenTheory.Proof (Proof(..),hyp,concl)
+import OpenTheory.Object (Object(..))
 
 data WriteState = WriteState {handle :: Handle, map :: Map Object Int}
 
@@ -32,7 +32,8 @@ logRawLn s = getField handle >>= liftIO . flip hPutStrLn s
 
 logCommand = logRawLn
 
-logNum = logCommand . (show :: Int -> String)
+logNum :: Int -> WM ()
+logNum = logCommand . show
 
 hc :: Loggable a => (a -> WM ()) -> a -> WM ()
 hc log a = do

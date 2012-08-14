@@ -1,7 +1,7 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
 import Data.Map (findWithDefault,delete)
-import OpenTheory.Name
-import OpenTheory.Type hiding (subst)
+import OpenTheory.Name (Name(Name))
+import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
 
 newtype Var = Var (Name, Type)

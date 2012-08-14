@@ -1,7 +1,7 @@
 module OpenTheory.Type (Type(..),TypeOp(TypeOp),typeOp,subst,alpha,alpha_nm,(-->),bool) where
 import Data.List (intercalate)
 import Data.Map (findWithDefault)
-import OpenTheory.Name
+import OpenTheory.Name (Name(Name),nsMin)
 
 newtype TypeOp = TypeOp Name
   deriving (Eq, Ord)

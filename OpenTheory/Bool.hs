@@ -1,9 +1,9 @@
 module OpenTheory.Bool (nsBool,truth,forall,forall_def) where
-import OpenTheory.Name
-import OpenTheory.Type
-import OpenTheory.Term
-import OpenTheory.Equality
-import OpenTheory.Proof
+import OpenTheory.Name (Name(Name),name)
+import OpenTheory.Type ((-->),bool,alpha)
+import OpenTheory.Term (Term(..),Var(Var),Const(Const))
+import OpenTheory.Equality (eq)
+import OpenTheory.Proof (axiom)
 
 nsBool = name ["Data","Bool"]
 

@@ -1,10 +1,10 @@
 module OpenTheory.Rule (trans,sym,spec,proveHyp,subs) where
 import Data.Map (singleton,empty)
-import OpenTheory.Type
-import OpenTheory.Term
-import OpenTheory.Equality
-import OpenTheory.Proof
-import OpenTheory.Bool
+import OpenTheory.Type (alpha_nm)
+import OpenTheory.Term (Term(AppTerm),rator,rand,typeOf)
+import OpenTheory.Equality (rhs)
+import OpenTheory.Proof (Proof(..),axiom,concl)
+import OpenTheory.Bool (truth,forall_def)
 
 -- subs n (x = y) (|- l = r[x]) = |- l = r[y]
 -- assumes x is the nth operand of r

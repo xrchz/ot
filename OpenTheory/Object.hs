@@ -1,8 +1,8 @@
 module OpenTheory.Object (Object(..)) where
-import OpenTheory.Name
-import OpenTheory.Type
-import OpenTheory.Term
-import OpenTheory.Proof
+import OpenTheory.Name (Name())
+import OpenTheory.Type (Type(),TypeOp())
+import OpenTheory.Term (Term(),Var(),Const())
+import OpenTheory.Proof (Proof())
 
 data Object =
     OTerm Term
