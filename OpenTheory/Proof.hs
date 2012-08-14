@@ -55,16 +55,14 @@ hyp (DeductAntisym th1 th2) =
     (Set.delete (concl th2) (hyp th1))
     (Set.delete (concl th1) (hyp th2))
 
-instance Eq Proof where
-  th1 == th2 =
-    hyp th1 == hyp th2 &&
-    concl th1 == concl th2
-
 instance Ord Proof where
   compare th1 th2 =
     case compare (hyp th1) (hyp th2) of
       EQ -> compare (concl th1) (concl th2)
       x -> x
+
+instance Eq Proof where
+  th1 == th2 = compare th1 th2 == EQ
 
 instance Show Proof where
   show th = show (hyp th) ++ " |- " ++ show (concl th)
