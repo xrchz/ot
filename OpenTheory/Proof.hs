@@ -3,10 +3,10 @@ import Data.Set (Set)
 import qualified Data.Set as Set (empty,union,delete,singleton)
 import Data.Map (Map,singleton)
 import OpenTheory.Name (Name())
-import OpenTheory.Type (Type(OpType),(-->),bool)
+import OpenTheory.Type (Type(),(-->),bool,rng)
 import OpenTheory.Term (Term(AppTerm,AbsTerm),Var(Var),typeOf,substType)
 import qualified OpenTheory.Term as Term (subst)
-import OpenTheory.Equality (eq,rhs)
+import OpenTheory.Equality (eq,rhs,destEq)
 
 data Proof =
     AbsThm Var Proof
@@ -23,11 +23,11 @@ concl :: Proof -> Term
 concl (Assume t) = t
 concl (Refl t) = eq (typeOf t) t t
 concl (AppThm th1 th2) = eq ty (AppTerm f1 x1) (AppTerm f2 x2)
-  where (AppTerm (AppTerm _ f1) f2) = concl th1
-        (AppTerm (AppTerm _ x1) x2) = concl th2
-        (OpType _ [_,ty]) = typeOf f1
+  where (f1,f2) = destEq (concl th1)
+        (x1,x2) = destEq (concl th2)
+        ty = rng (typeOf f1)
 concl (AbsThm v th) = eq ty (AbsTerm v t1) (AbsTerm v t2)
-  where (AppTerm (AppTerm _ t1) t2) = concl th
+  where (t1,t2) = destEq (concl th)
         (Var (_,tyv)) = v
         ty = tyv --> (typeOf t1)
 concl (EqMp th1 _) = rhs (concl th1)
