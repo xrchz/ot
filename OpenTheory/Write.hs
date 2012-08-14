@@ -13,12 +13,15 @@ import OpenTheory.Term (Term(..),Var(Var),Const(Const))
 import OpenTheory.Proof (Proof(..),hyp,concl)
 import OpenTheory.Object (Object(..))
 
+-- should use the reader monad for immutable state
 data WriteState = WriteState {handle :: Handle, map :: Map Object Int}
 
 type WM a = StateT WriteState IO a
 
+getField :: (WriteState -> a) -> WM a
 getField f = get >>= return . f
 
+putMap :: Map Object Int -> WM ()
 putMap m = do
   s <- get
   put (s {map = m})
@@ -27,23 +30,27 @@ class Loggable a where
   key :: a -> Object
   log :: a -> WM ()
 
+logRaw :: String -> WM ()
 logRaw s = getField handle >>= liftIO . flip hPutStr s
+
+logRawLn :: String -> WM ()
 logRawLn s = getField handle >>= liftIO . flip hPutStrLn s
 
+logCommand :: String -> WM ()
 logCommand = logRawLn
 
 logNum :: Int -> WM ()
 logNum = logCommand . show
 
 hc :: Loggable a => (a -> WM ()) -> a -> WM ()
-hc log a = do
-  m <- getField map
-  case Map.lookup (key a) m of
+hc logA a = do
+  m0 <- getField map
+  case Map.lookup (key a) m0 of
     Just k -> do
       logNum k
       logCommand "ref"
     Nothing -> do
-      log a
+      logA a
       m <- getField map
       let k = Map.size m
       logNum k
@@ -174,6 +181,7 @@ instance Loggable Proof where
       log th2
       logCommand "deductAntisym"
 
+logThm :: Proof -> WM ()
 logThm th = do
   log th
   log (hyp th)

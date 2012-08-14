@@ -8,14 +8,17 @@ import OpenTheory.Bool (truth,forall_def)
 
 -- subs n (x = y) (|- l = r[x]) = |- l = r[y]
 -- assumes x is the nth operand of r
+subs :: Int -> Proof -> Proof -> Proof
 subs n eq th = trans th (build n (rhs (concl th))) where
   build 0 _ = eq
-  build n (AppTerm f x) = AppThm (Refl f) (build (n-1) x)
+  build m (AppTerm f x) = AppThm (Refl f) (build (m-1) x)
   build _ _ = error "subs"
 
+trans :: Proof -> Proof -> Proof
 trans th1 th2 = EqMp (AppThm (Refl t) th2) th1
   where t = rator (concl th1)
 
+sym :: Proof -> Proof
 sym th = EqMp lel_rel lel
   where
     lel_rel = AppThm le_re lel
@@ -24,6 +27,7 @@ sym th = EqMp lel_rel lel
     AppTerm (AppTerm e l) _ = concl th
     ler = th
 
+spec :: Term -> Proof -> Proof
 spec tm th = EqMp (sym pv_T) (axiom truth)
   where
     pv_T = trans pv_lxPxv (trans lxPxv_lxTv lxTv_T)
@@ -41,4 +45,5 @@ spec tm th = EqMp (sym pv_T) (axiom truth)
     ty = typeOf v
     v = tm
 
+proveHyp :: Proof -> Proof -> Proof
 proveHyp h th = EqMp (DeductAntisym h th) h

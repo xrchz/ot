@@ -1,4 +1,4 @@
-module OpenTheory.Name (Name(Name),name,nsMin,logNamespace,logComponent) where
+module OpenTheory.Name (Name(Name),Component,name,nsMin,logNamespace,logComponent) where
 import Control.Monad.State (evalState,get,put)
 
 type Component = String
@@ -8,10 +8,13 @@ type Namespace = [Component]
 newtype Name = Name (Namespace, Component)
   deriving (Eq, Ord)
 
+name :: Namespace -> Component -> Name
 name = curry Name
 
+nsMin :: Component -> Name
 nsMin = name []
 
+logComponent :: Monad m => (String -> m ()) -> Component -> m ()
 logComponent lr = lc where
   lc [] = return ()
   lc (x:xs) = do
@@ -19,6 +22,7 @@ logComponent lr = lc where
     lr [x]
     lc xs
 
+logNamespace :: Monad m => (String -> m ()) -> Namespace -> m ()
 logNamespace lr = ln where
   ln [] = return ()
   ln (c:ns) = do

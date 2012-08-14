@@ -10,8 +10,9 @@ import qualified OpenTheory.Read as R (ReadState(..))
 import OpenTheory.Write (WriteState(WriteState),logThm)
 import qualified OpenTheory.Write as W (WriteState(..))
 
-main = evalStateT c rs where
-  c = do
+main :: IO ()
+main = evalStateT m rs where
+  m = do
     thms <- readArticle (\h c s -> putStack $ (OThm $ Axiom (fromList h) c) : s) defaultHandler thmsOnEOF
     liftIO $ evalStateT (output thms) ws where
       ws = WriteState {W.handle=stdout, W.map=Map.empty}

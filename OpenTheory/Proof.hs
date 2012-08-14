@@ -19,6 +19,7 @@ data Proof =
   | Refl Term
   | Subst (Map Name Type, Map Var Term) Proof
 
+concl :: Proof -> Term
 concl (Assume t) = t
 concl (Refl t) = eq (typeOf t) t t
 concl (AppThm th1 th2) = eq ty (AppTerm f1 x1) (AppTerm f2 x2)
@@ -37,6 +38,7 @@ concl (BetaConv tm) = case tm of
 concl (Subst (sty,stm) th) = Term.subst stm (substType sty (concl th))
 concl (DeductAntisym th1 th2) = eq bool (concl th1) (concl th2)
 
+hyp :: Proof -> Set Term
 hyp (Assume t) = Set.singleton t
 hyp (Refl _) = Set.empty
 hyp (AppThm th1 th2) = Set.union (hyp th1) (hyp th2)
@@ -64,4 +66,5 @@ instance Ord Proof where
 instance Show Proof where
   show th = show (hyp th) ++ " |- " ++ show (concl th)
 
+axiom :: Term -> Proof
 axiom = Axiom Set.empty

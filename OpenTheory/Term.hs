@@ -1,5 +1,5 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
-import Data.Map (findWithDefault,delete)
+import Data.Map (Map,findWithDefault,delete)
 import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
@@ -30,6 +30,7 @@ instance Show Term where
   show (ConstTerm c _) = show c
   show (VarTerm v) = show v
 
+typeOf :: Term -> Type
 typeOf (VarTerm (Var (_,ty))) = ty
 typeOf (ConstTerm _ ty) = ty
 typeOf tm@(AppTerm f _) = case typeOf f of
@@ -37,19 +38,24 @@ typeOf tm@(AppTerm f _) = case typeOf f of
   ty -> error ("bad type: "++show ty++"\nfor rator of: "++show tm)
 typeOf (AbsTerm (Var (_,x)) t) = x --> (typeOf t)
 
+rator :: Term -> Term
 rator (AppTerm f _) = f
 rator tm = error ("rator " ++ show tm)
 
+rand :: Term -> Term
 rand (AppTerm _ x) = x
 rand tm = error ("rand " ++ show tm)
 
+subst :: Map Var Term -> Term -> Term
 subst s v@(VarTerm k) = findWithDefault v k s
 subst _ c@(ConstTerm _ _) = c
 subst s (AppTerm t1 t2) = AppTerm (subst s t1) (subst s t2)
 subst s (AbsTerm v b) = AbsTerm v (subst (delete v s) b)
 
+varSubstType :: Map Name Type -> Var -> Var
 varSubstType s (Var (n,ty)) = Var (n,Type.subst s ty)
 
+substType :: Map Name Type -> Term -> Term
 substType s (VarTerm v) = VarTerm (varSubstType s v)
 substType s (ConstTerm n ty) = ConstTerm n (Type.subst s ty)
 substType s (AppTerm t1 t2) = AppTerm (substType s t1) (substType s t2)
