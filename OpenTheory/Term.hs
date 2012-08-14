@@ -34,22 +34,22 @@ instance Ord Term where
               Set.delete v2 (freeVars t2)
   compare (AbsTerm v1 _) (AbsTerm v2 _) =
     compare v1 v2
-  compare (AbsTerm _  _ ) _ =
-    LT
 
-  compare (AppTerm _  _ ) (AbsTerm _  _ ) = GT
-  compare (AppTerm f1 x1) (AppTerm f2 x2) = lex (compare f1 f2) (compare x1 x2)
-  compare (AppTerm _  _ ) _               = LT
+  compare (AppTerm f1 x1) (AppTerm f2 x2) =
+    lex (compare f1 f2) (compare x1 x2)
 
-  compare (ConstTerm _  _ ) (AbsTerm   _  _ ) = GT
-  compare (ConstTerm _  _ ) (AppTerm   _  _ ) = GT
-  compare (ConstTerm c1 t1) (ConstTerm c2 t2) = lex (compare c1 c2) (compare t1 t2)
-  compare (ConstTerm _  _ ) _                 = LT
+  compare (ConstTerm c1 t1) (ConstTerm c2 t2) =
+    lex (compare c1 c2) (compare t1 t2)
 
-  compare (VarTerm _ ) (AbsTerm   _  _ ) = GT
-  compare (VarTerm _ ) (AppTerm   _  _ ) = GT
-  compare (VarTerm _ ) (ConstTerm _  _ ) = GT
-  compare (VarTerm v1) (VarTerm   v2   ) = compare v1 v2
+  compare (VarTerm v1) (VarTerm v2) =
+    compare v1 v2
+
+  compare (AbsTerm _ _) _ = LT
+  compare _ (AbsTerm _ _) = GT
+  compare (AppTerm _ _) _ = LT
+  compare _ (AppTerm _ _) = GT
+  compare (ConstTerm _ _) _ = LT
+  compare _ (ConstTerm _ _) = GT
 
 instance Eq Term where
   t1 == t2 = compare t1 t2 == EQ
@@ -87,7 +87,7 @@ freeVars :: Term -> Set Var
 freeVars (VarTerm v) = Set.singleton v
 freeVars (ConstTerm _ _) = Set.empty
 freeVars (AppTerm t1 t2) = Set.union (freeVars t1) (freeVars t2)
-freeVars (AbsTerm v b) = Set.delete v (freeVars b)
+freeVars (AbsTerm v b) = Set.delete v $ freeVars b
 
 vary :: Var -> Var
 vary (Var (Name(ns,n),ty)) = Var (Name(ns,n++"'"),ty)
