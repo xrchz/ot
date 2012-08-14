@@ -1,4 +1,4 @@
-module OpenTheory.Write (WriteState(..),logRawLn,logThm) where
+module OpenTheory.Write (WM,WriteState(..),logRawLn,logThm) where
 import Data.Map (Map)
 import Data.Set (Set)
 import qualified Data.Set as Set (toAscList)

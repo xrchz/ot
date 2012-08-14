@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module OpenTheory.Read (ReadState(..),readArticle,defaultHandler,thmsOnEOF,readTerm,putStack) where
+module OpenTheory.Read (RM,ReadState(..),readArticle,defaultHandler,thmsOnEOF,readTerm,putStack) where
 import Data.Map (Map)
 import qualified Data.Map as Map (lookup,insert,delete,fromList)
 import qualified Data.List as List (map,foldl')
