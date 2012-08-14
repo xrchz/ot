@@ -1,6 +1,6 @@
 module OpenTheory.Proof (Proof(..),concl,hyp,axiom) where
 import Data.Set (Set)
-import qualified Data.Set as Set (empty,union,delete,singleton)
+import qualified Data.Set as Set (empty,union,delete,singleton,map)
 import Data.Map (Map,singleton)
 import OpenTheory.Name (Name())
 import OpenTheory.Type (Type(),(-->),bool,rng)
@@ -19,6 +19,9 @@ data Proof =
   | Refl Term
   | Subst (Map Name Type, Map Var Term) Proof
 
+substBoth :: (Map Name Type, Map Var Term) -> Term -> Term
+substBoth (sty,stm) = Term.subst stm . substType sty
+
 concl :: Proof -> Term
 concl (Assume t) = t
 concl (Refl t) = eq (typeOf t) t t
@@ -35,7 +38,7 @@ concl (Axiom _ c) = c
 concl (BetaConv tm) = case tm of
   AppTerm (AbsTerm v b) t -> eq (typeOf tm) tm (Term.subst (singleton v t) b)
   _ -> error ("concl BetaConv "++show tm)
-concl (Subst (sty,stm) th) = Term.subst stm (substType sty (concl th))
+concl (Subst s th) = substBoth s (concl th)
 concl (DeductAntisym th1 th2) = eq bool (concl th1) (concl th2)
 
 hyp :: Proof -> Set Term
@@ -46,7 +49,7 @@ hyp (AbsThm _ th) = hyp th
 hyp (EqMp th1 th2) = Set.union (hyp th1) (hyp th2)
 hyp (Axiom h _) = h
 hyp (BetaConv _) = Set.empty
-hyp (Subst _ _) = Set.empty
+hyp (Subst s th) = Set.map (substBoth s) (hyp th)
 hyp (DeductAntisym th1 th2) =
   Set.union
     (Set.delete (concl th2) (hyp th1))
