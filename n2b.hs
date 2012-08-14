@@ -1,5 +1,5 @@
 import qualified Data.Map as Map (empty)
-import Control.Monad.State (liftIO,evalStateT)
+import Control.Monad.State (evalStateT)
 import Control.Monad.Error (throwError)
 import System.IO (stdin,stdout)
 import Prelude hiding (getLine,map)
@@ -14,7 +14,7 @@ import OpenTheory.Bool (forall)
 import OpenTheory.Natural (nsNum,num,eq)
 import OpenTheory.Read (ReadState(ReadState),readTerm)
 import qualified OpenTheory.Read as R (ReadState(..))
-import OpenTheory.Write (WriteState(WriteState),logThm,logRawLn)
+import OpenTheory.Write (WM,WriteState(WriteState),logThm,logRawLn)
 import qualified OpenTheory.Write as W (WriteState(..))
 
 data Norrish =
@@ -108,13 +108,15 @@ b2t BZero = zero
 b2t (BBit0 b) = bit0 (b2t b)
 b2t (BBit1 b) = bit1 (b2t b)
 
+write :: Term -> WM ()
+write tm =
+  case depthConv ((flip (>>=) (return . n2b)) . t2n) tm of
+    Right th -> logThm th
+    Left err -> logRawLn err
+
 main :: IO ()
-main = evalStateT c rs where
-  c = do
-    tm <- readTerm
-    let m = case depthConv ((flip (>>=) (return . n2b)) . t2n) tm of
-              Right th -> logThm th
-              Left err -> logRawLn err
-    liftIO $ evalStateT m ws
-  ws = WriteState {W.handle=stdout, W.map=Map.empty}
-  rs = ReadState {R.handle=stdin, R.map=Map.empty, R.stack=[], R.thms=[]}
+main = do
+  let rs = ReadState {R.handle=stdin, R.map=Map.empty, R.stack=[], R.thms=[]}
+  tm <- evalStateT readTerm rs
+  let ws = WriteState {W.handle=stdout, W.map=Map.empty}
+  evalStateT (write tm) ws
