@@ -1,7 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module OpenTheory.Read (RM,ReadState(..),readArticle,defaultHandler,thmsOnEOF,readTerm,putStack) where
+module OpenTheory.Read (RM,ReadState(..),readArticle,defaultAxiom,defaultHandler,thmsOnEOF,readTerm,putStack) where
 import Data.Map (Map)
 import qualified Data.Map as Map (lookup,insert,delete,fromList)
+import qualified Data.Set as Set (fromList)
 import qualified Data.List as List (map,foldl')
 import Data.Maybe (fromJust)
 import Data.Char (isDigit)
@@ -14,7 +15,7 @@ import System.IO (Handle,hGetLine)
 import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(..),TypeOp(TypeOp))
 import OpenTheory.Term (Term(..),Var(Var),Const(Const),rand)
-import OpenTheory.Proof (Proof(Assume,AbsThm,EqMp,Refl,Subst,AppThm,DeductAntisym,BetaConv))
+import OpenTheory.Proof (Proof(Axiom,Assume,AbsThm,EqMp,Refl,Subst,AppThm,DeductAntisym,BetaConv))
 import OpenTheory.Object (Object(..))
 import OpenTheory.Rule (proveHyp)
 import Prelude hiding (log,map,getLine,catch)
@@ -63,6 +64,9 @@ instance Exception TermEx
 
 defaultHandler :: Dynamic -> a
 defaultHandler = throw
+
+defaultAxiom :: [Term] -> Term -> [Object] -> RM ()
+defaultAxiom h c s = putStack $ OThm (Axiom (Set.fromList h) c) : s
 
 readTerm :: RM Term
 readTerm = readArticle throwAxiom (return . rand . unEx) undefined where
