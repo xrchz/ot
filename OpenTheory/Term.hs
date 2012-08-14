@@ -1,7 +1,7 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
 import Data.Set (Set)
 import qualified Data.Set as Set (singleton,empty,union,delete,unions,member)
-import Data.Map (Map,findWithDefault,delete,singleton,elems,insert)
+import Data.Map (Map,findWithDefault,delete,singleton,elems,insert,filterWithKey)
 import OpenTheory.Name (Name(Name),nsMin)
 import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
@@ -24,26 +24,32 @@ lex EQ o2 = o2
 lex o1 _  = o1
 
 instance Ord Term where
-  compare (AbsTerm v1 t1) (AbsTerm v2 t2) | v1 == v2 = compare t1 t2
+  compare (AbsTerm v1 t1) (AbsTerm v2 t2) | v1 == v2 =
+    compare t1 t2
   compare (AbsTerm v1@(Var(_,ty1)) t1) (AbsTerm v2@(Var(_,ty2)) t2) | ty1 == ty2 =
-    compare (subst (singleton v1 v3) t1) (subst (singleton v2 v3) t2) where
+    subst (singleton v1 v3) t1 `compare`
+    subst (singleton v2 v3) t2 where
       v3 = VarTerm $ variant avoid (Var (nsMin"",ty1))
-      avoid = Set.union
-                (Set.delete v1 (freeVars t1))
-                (Set.delete v2 (freeVars t2))
-  compare (AbsTerm v1 _) (AbsTerm v2 _) = compare v1 v2
-  compare (AbsTerm _  _ ) _               = LT
+      avoid = Set.delete v1 (freeVars t1) `Set.union`
+              Set.delete v2 (freeVars t2)
+  compare (AbsTerm v1 _) (AbsTerm v2 _) =
+    compare v1 v2
+  compare (AbsTerm _  _ ) _ =
+    LT
+
   compare (AppTerm _  _ ) (AbsTerm _  _ ) = GT
   compare (AppTerm f1 x1) (AppTerm f2 x2) = lex (compare f1 f2) (compare x1 x2)
   compare (AppTerm _  _ ) _               = LT
-  compare (ConstTerm _ _) (AbsTerm _ _) = LT
-  compare (ConstTerm _ _) (AppTerm _ _) = LT
+
+  compare (ConstTerm _  _ ) (AbsTerm   _  _ ) = GT
+  compare (ConstTerm _  _ ) (AppTerm   _  _ ) = GT
   compare (ConstTerm c1 t1) (ConstTerm c2 t2) = lex (compare c1 c2) (compare t1 t2)
-  compare (ConstTerm _ _) _ = LT
-  compare (VarTerm _) (AbsTerm _ _) = LT
-  compare (VarTerm _) (AppTerm _ _) = LT
-  compare (VarTerm _) (ConstTerm _ _) = LT
-  compare (VarTerm v1) (VarTerm v2) = compare v1 v2
+  compare (ConstTerm _  _ ) _                 = LT
+
+  compare (VarTerm _ ) (AbsTerm   _  _ ) = GT
+  compare (VarTerm _ ) (AppTerm   _  _ ) = GT
+  compare (VarTerm _ ) (ConstTerm _  _ ) = GT
+  compare (VarTerm v1) (VarTerm   v2   ) = compare v1 v2
 
 instance Eq Term where
   t1 == t2 = compare t1 t2 == EQ
@@ -96,8 +102,13 @@ subst s v@(VarTerm k) = findWithDefault v k s
 subst _ c@(ConstTerm _ _) = c
 subst s (AppTerm t1 t2) = AppTerm (subst s t1) (subst s t2)
 subst s (AbsTerm v b) = AbsTerm v' (subst s' b) where
-  v' = variant (Set.unions (map freeVars (elems s))) v
-  s' = if v == v' then delete v s else insert v (VarTerm v') s
+  v' = variant avoid v
+  avoid = Set.unions $ map freeVars willSubst
+  willSubst = elems $ filterWithKey (\k _ -> Set.member k fvs) s
+  fvs = Set.delete v $ freeVars b
+  s' = if v == v'
+       then delete v s
+       else insert v (VarTerm v') s
 
 varSubstType :: Map Name Type -> Var -> Var
 varSubstType s (Var (n,ty)) = Var (n,Type.subst s ty)
