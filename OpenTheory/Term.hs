@@ -1,5 +1,5 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
-import Data.Map (Map,findWithDefault,delete)
+import Data.Map (Map,findWithDefault,delete,singleton)
 import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(OpType),(-->))
 import qualified OpenTheory.Type as Type (subst)
@@ -15,7 +15,14 @@ data Term =
   | AppTerm Term Term
   | ConstTerm Const Type
   | VarTerm Var
-  deriving (Eq, Ord)
+  deriving Ord
+
+instance Eq Term where
+  AbsTerm v1 t1 == AbsTerm v2 t2 = t1 == subst (singleton v2 (VarTerm v1)) t2
+  AppTerm f1 x1 == AppTerm f2 x2 = f1 == f2 && x1 == x2
+  ConstTerm c1 t1 == ConstTerm c2 t2 = c1 == c2 && t1 == t2
+  VarTerm v1 == VarTerm v2 = v1 == v2
+  _ == _ = False
 
 instance Show Var where
   show (Var(n,ty)) = "("++(show n)++":"++(show ty)++")"
