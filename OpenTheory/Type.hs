@@ -1,4 +1,4 @@
-module OpenTheory.Type (Type(..),TypeOp(TypeOp),typeOp,subst,alpha,alpha_nm,(-->),bool,dom,rng) where
+module OpenTheory.Type (Type(..),TypeOp(TypeOp),typeOp,subst,alpha,alpha_nm,fun,(-->),bool,dom,rng) where
 import Data.List (intercalate)
 import Data.Map (Map,findWithDefault)
 import OpenTheory.Name (Name(Name),nsMin)
@@ -32,17 +32,17 @@ alpha_nm = Name ([],"A")
 alpha :: Type
 alpha = VarType alpha_nm
 
-fn :: Name
-fn = nsMin "->"
+fun :: TypeOp
+fun = TypeOp $ nsMin "->"
 infixr -->
 (-->) :: Type -> Type -> Type
-x --> y = typeOp fn [x, y]
+x --> y = OpType fun [x, y]
 
 bool :: Type
 bool = typeOp (nsMin "bool") []
 
 dom_rng :: Type -> (Type,Type)
-dom_rng (OpType (TypeOp op) [d,r]) | op == fn = (d,r)
+dom_rng (OpType op [d,r]) | op == fun = (d,r)
 dom_rng _ = error "dom_rng"
 
 dom :: Type -> Type

@@ -1,9 +1,9 @@
 module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
 import Data.Set (Set)
-import qualified Data.Set as Set (singleton,empty,union,delete,unions,member)
-import Data.Map (Map,findWithDefault,delete,singleton,elems,insert,filterWithKey)
+import qualified Data.Set as Set (singleton,empty,union,delete,member)
+import Data.Map (Map,findWithDefault,delete,singleton,insert)
 import OpenTheory.Name (Name(Name),nsMin)
-import OpenTheory.Type (Type(OpType),(-->))
+import OpenTheory.Type (Type(OpType),(-->),fun)
 import qualified OpenTheory.Type as Type (subst)
 import Prelude hiding (lex)
 
@@ -71,7 +71,7 @@ typeOf :: Term -> Type
 typeOf (VarTerm (Var (_,ty))) = ty
 typeOf (ConstTerm _ ty) = ty
 typeOf tm@(AppTerm f _) = case typeOf f of
-  OpType _ [_, r] -> r
+  OpType op [_, r] | op == fun -> r
   ty -> error ("bad type: "++show ty++"\nfor rator of: "++show tm)
 typeOf (AbsTerm (Var (_,x)) t) = x --> (typeOf t)
 
@@ -86,11 +86,11 @@ rand tm = error ("rand " ++ show tm)
 freeVars :: Term -> Set Var
 freeVars (VarTerm v) = Set.singleton v
 freeVars (ConstTerm _ _) = Set.empty
-freeVars (AppTerm t1 t2) = Set.union (freeVars t1) (freeVars t2)
+freeVars (AppTerm t1 t2) = freeVars t1 `Set.union` freeVars t2
 freeVars (AbsTerm v b) = Set.delete v $ freeVars b
 
 vary :: Var -> Var
-vary (Var (Name(ns,n),ty)) = Var (Name(ns,n++"'"),ty)
+vary (Var (Name(ns,n),ty)) = Var (Name(ns,' ':n),ty)
 
 variant :: Set Var -> Var -> Var
 variant avoid = f where
@@ -103,9 +103,7 @@ subst _ c@(ConstTerm _ _) = c
 subst s (AppTerm t1 t2) = AppTerm (subst s t1) (subst s t2)
 subst s (AbsTerm v b) = AbsTerm v' (subst s' b) where
   v' = variant avoid v
-  avoid = Set.unions $ map freeVars willSubst
-  willSubst = elems $ filterWithKey (\k _ -> Set.member k fvs) s
-  fvs = Set.delete v $ freeVars b
+  avoid = freeVars $ subst (delete v s) b
   s' = if v == v'
        then delete v s
        else insert v (VarTerm v') s
