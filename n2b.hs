@@ -8,6 +8,7 @@ import OpenTheory.Term (Term(..),Var(..),Const(..),rand,rator)
 import OpenTheory.Type ((-->))
 import OpenTheory.Equality (rhs)
 import OpenTheory.Proof (Proof(Refl,AppThm),axiom,concl)
+import OpenTheory.Proof (Proof(EqMp))
 import OpenTheory.Rule (trans,spec,subs)
 import OpenTheory.Conv (depthConv)
 import OpenTheory.Bool (forall)
@@ -111,7 +112,7 @@ b2t (BBit1 b) = bit1 (b2t b)
 write :: Term -> WM ()
 write tm =
   case depthConv ((flip (>>=) (return . n2b)) . t2n) tm of
-    Right th -> logThm th
+    Right th -> logThm (EqMp th (axiom tm)) -- logThm th
     Left err -> logRawLn err
 
 main :: IO ()
