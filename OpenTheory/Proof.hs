@@ -6,7 +6,7 @@ import OpenTheory.Name (Name())
 import OpenTheory.Type (Type(),(-->),bool,rng)
 import OpenTheory.Term (Term(AppTerm,AbsTerm),Var(Var),typeOf,substType)
 import qualified OpenTheory.Term as Term (subst)
-import OpenTheory.Equality (eq,rhs,destEq)
+import OpenTheory.Equality (eq,rhs,destEq,destEqTy)
 
 data Proof =
     AbsThm Var Proof
@@ -26,13 +26,13 @@ concl :: Proof -> Term
 concl (Assume t) = t
 concl (Refl t) = eq (typeOf t) t t
 concl (AppThm th1 th2) = eq ty (AppTerm f1 x1) (AppTerm f2 x2)
-  where (f1,f2) = destEq (concl th1)
+  where (fn,f1,f2) = destEqTy (concl th1)
         (x1,x2) = destEq (concl th2)
-        ty = rng (typeOf f1)
+        ty = rng fn
 concl (AbsThm v th) = eq ty (AbsTerm v t1) (AbsTerm v t2)
-  where (t1,t2) = destEq (concl th)
-        (Var (_,tyv)) = v
-        ty = tyv --> (typeOf t1)
+  where (tt,t1,t2) = destEqTy (concl th)
+        (Var (_,tv)) = v
+        ty = tv --> tt
 concl (EqMp th1 _) = rhs (concl th1)
 concl (Axiom _ c) = c
 concl (BetaConv tm) = case tm of
@@ -57,8 +57,8 @@ hyp (DeductAntisym th1 th2) =
 
 instance Ord Proof where
   compare th1 th2 =
-    case compare (hyp th1) (hyp th2) of
-      EQ -> compare (concl th1) (concl th2)
+    case compare (concl th1) (concl th2) of
+      EQ -> compare (hyp th1) (hyp th2)
       x -> x
 
 instance Eq Proof where

@@ -86,11 +86,12 @@ instance (Loggable k, Loggable v) => Loggable (Map k v) where
 
 instance Loggable Name where
   key = OName
-  log (Name (ns,n)) = do
-    logRaw "\""
-    logNamespace logRaw ns
-    logComponent logRaw n
-    logRawLn "\""
+  log = hc l where
+    l (Name (ns,n)) = do
+      logRaw "\""
+      logNamespace logRaw ns
+      logComponent logRaw n
+      logRawLn "\""
 
 instance Loggable TypeOp where
   key = OTypeOp

@@ -69,8 +69,11 @@ defaultAxiom :: [Term] -> Term -> [Object] -> RM ()
 defaultAxiom h c s = putStack $ OThm (Axiom (Set.fromList h) c) : s
 
 readTerm :: RM Term
-readTerm = readArticle throwAxiom (return . rand . unEx) undefined where
+readTerm = readArticle throwAxiom (return . rand . unEx) errorOnEOF where
   throwAxiom _ c _ = liftIO $ throwIO (TermEx c)
+
+errorOnEOF :: RM a
+errorOnEOF = error "unexpected EOF"
 
 thmsOnEOF :: RM [Proof]
 thmsOnEOF = get >>= return . thms
@@ -81,9 +84,7 @@ readArticle axiom handleError handleEOF = loop where
     result <- getLine
     case result of
       Left _ -> handleEOF
-      Right line -> do
-        liftCatch catch (rm >> loop) handleError
-        where
+      Right line -> liftCatch catch (rm >> loop) handleError where
         rm = case line of
           '"':s -> do
             st <- getStack

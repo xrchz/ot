@@ -1,4 +1,4 @@
-module OpenTheory.Equality (eq,rhs,destEq) where
+module OpenTheory.Equality (eq,rhs,destEq,destEqTy) where
 import OpenTheory.Name (nsMin)
 import OpenTheory.Type (Type(),(-->),bool,dom)
 import OpenTheory.Term (Term(ConstTerm,AppTerm),Const(Const),rand)
