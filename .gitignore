@@ -1,5 +1,4 @@
 *.o
 *.hi
-n2b
-b2n
+numconv
 eqMp
