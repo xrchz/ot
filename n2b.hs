@@ -1,7 +1,10 @@
 import qualified Data.Map as Map (empty)
 import Data.Maybe (fromJust)
 import Control.Monad.State (evalStateT)
-import System.IO (stdin,stdout)
+import System.IO (stdin,stdout,stderr,hPutStr)
+import System.Exit (exitSuccess,exitFailure)
+import System.Environment (getArgs)
+import System.Console.GetOpt (getOpt,ArgOrder(Permute),usageInfo,ArgDescr(NoArg),OptDescr(Option))
 import Prelude hiding (getLine,map)
 import OpenTheory.Name (Name(..))
 import OpenTheory.Term (Term(..),Var(..))
@@ -49,14 +52,31 @@ vn = Var (Name ([],"n"),num)
 tn :: Term
 tn  = VarTerm vn
 
-write :: Term -> WM ()
-write tm =
-  let th = fromJust $ depthConv ((flip (>>=) (return . n2b)) . t2n) tm in
-    logThm (EqMp th (axiom tm)) -- logThm th
+write :: Bool -> Term -> WM ()
+write b tm = f $ fromJust $ depthConv ((flip (>>=) (return . n2b)) . t2n) tm where
+  f = if b then logThm . flip EqMp (axiom tm) else logThm
+
+data Options = Rule | Help
+
+options :: [OptDescr Options]
+options =
+  [ Option ['r'] ["rule"] (NoArg Rule) "return t |- t' instead of |- t = t'"
+  , Option ['h'] ["help"] (NoArg Help) "print this help"
+  ]
+
+usage :: String
+usage = usageInfo "n2b: convert Norrish numerals to binary" options
 
 main :: IO ()
 main = do
+  args <- getArgs
+  rule <-
+    case getOpt Permute options args of
+      ([Rule],[],[]) -> return True
+      ([Help],[],[]) -> putStr usage >> exitSuccess
+      ([],[],[]) -> return False
+      (_,_,errs) -> hPutStr stderr (concat errs ++ usage) >> exitFailure
   let rs = ReadState {R.handle=stdin, R.map=Map.empty, R.stack=[], R.thms=[]}
   tm <- evalStateT readTerm rs
   let ws = WriteState {W.handle=stdout, W.map=Map.empty}
-  evalStateT (write tm) ws
+  evalStateT (write rule tm) ws
