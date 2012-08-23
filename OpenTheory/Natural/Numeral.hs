@@ -18,22 +18,14 @@ suc  = AppTerm (ConstTerm (Const (nsNum "suc")) (num --> num))
 bit_tm :: String -> Term
 bit_tm s = ConstTerm (Const (nsNum ("bit"++s))) (num --> num)
 
-bit0_tm :: Term
+bit0_tm, bit1_tm, bit2_tm :: Term
 bit0_tm = bit_tm "0"
-
-bit1_tm :: Term
 bit1_tm = bit_tm "1"
-
-bit2_tm :: Term
 bit2_tm = bit_tm "2"
 
-bit0 :: Term -> Term
+bit0, bit1, bit2 :: Term -> Term
 bit0 = AppTerm bit0_tm
-
-bit1 :: Term -> Term
 bit1 = AppTerm bit1_tm
-
-bit2 :: Term -> Term
 bit2 = AppTerm bit2_tm
 
 data Norrish =

@@ -30,10 +30,8 @@ class Loggable a where
   key :: a -> Object
   log :: a -> WM ()
 
-logRaw :: String -> WM ()
-logRaw s = getField handle >>= liftIO . flip hPutStr s
-
-logRawLn :: String -> WM ()
+logRaw, logRawLn :: String -> WM ()
+logRaw s   = getField handle >>= liftIO . flip hPutStr s
 logRawLn s = getField handle >>= liftIO . flip hPutStrLn s
 
 logCommand :: String -> WM ()

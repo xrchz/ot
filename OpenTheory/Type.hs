@@ -45,8 +45,6 @@ dom_rng :: Type -> (Type,Type)
 dom_rng (OpType op [d,r]) | op == fun = (d,r)
 dom_rng _ = error "dom_rng"
 
-dom :: Type -> Type
+dom, rng :: Type -> Type
 dom = fst . dom_rng
-
-rng :: Type -> Type
 rng = snd . dom_rng

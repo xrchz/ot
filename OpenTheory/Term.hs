@@ -75,13 +75,11 @@ typeOf tm@(AppTerm f _) = case typeOf f of
   ty -> error ("bad type: "++show ty++"\nfor rator of: "++show tm)
 typeOf (AbsTerm (Var (_,x)) t) = x --> (typeOf t)
 
-rator :: Term -> Term
+rator, rand :: Term -> Term
 rator (AppTerm f _) = f
 rator tm = error ("rator " ++ show tm)
-
-rand :: Term -> Term
-rand (AppTerm _ x) = x
-rand tm = error ("rand " ++ show tm)
+rand  (AppTerm _ x) = x
+rand  tm = error ("rand "  ++ show tm)
 
 freeVars :: Term -> Set Var
 freeVars (VarTerm v) = Set.singleton v

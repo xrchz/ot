@@ -34,17 +34,11 @@ binc BZero = sucZeroBit1Zero
 binc (BBit0 n) = spec (b2t n) sucBit0Bit1
 binc (BBit1 n) = subs 1 (binc n) (spec (b2t n) sucBit1Bit0Suc)
 
-bit2SucBit1 :: Proof
-bit2SucBit1 = axiom (forall vn (eq (bit2 tn) (suc (bit1 tn))))
-
-sucZeroBit1Zero :: Proof
-sucZeroBit1Zero = axiom (eq (suc zero) (bit1 zero))
-
-sucBit0Bit1 :: Proof
-sucBit0Bit1 = axiom (forall vn (eq (suc (bit0 tn)) (bit1 tn)))
-
-sucBit1Bit0Suc :: Proof
-sucBit1Bit0Suc = axiom (forall vn (eq (suc (bit1 tn)) (bit0 (suc tn))))
+bit2SucBit1, sucZeroBit1Zero, sucBit0Bit1, sucBit1Bit0Suc :: Proof
+bit2SucBit1     = axiom $ forall vn $ eq (bit2 tn) (suc (bit1 tn))
+sucZeroBit1Zero = axiom $ eq (suc zero) (bit1 zero)
+sucBit0Bit1     = axiom $ forall vn $ eq (suc (bit0 tn)) (bit1 tn)
+sucBit1Bit0Suc  = axiom $ forall vn $ eq (suc (bit1 tn)) (bit0 (suc tn))
 
 -- b2n n[Bin] = |- n[Bin] = n[Nor]
 b2n :: Binary -> Proof
@@ -58,20 +52,14 @@ bdub NZero = bit0Zero
 bdub (NBit1 n) = subs 1 (bdub n) (spec (n2t n) bit0Bit1Bit2Bit0)
 bdub (NBit2 n) = (spec (n2t n) bit0Bit2Bit2Bit1)
 
-bit0Zero :: Proof
-bit0Zero = axiom $ eq (bit0 zero) zero
-
-bit0Bit1Bit2Bit0 :: Proof
+bit0Zero, bit0Bit1Bit2Bit0, bit0Bit2Bit2Bit1 :: Proof
+bit0Zero         = axiom $ eq (bit0 zero) zero
 bit0Bit1Bit2Bit0 = axiom $ forall vn $ eq (bit0 (bit1 tn)) (bit2 (bit0 tn))
-
-bit0Bit2Bit2Bit1 :: Proof
 bit0Bit2Bit2Bit1 = axiom $ forall vn $ eq (bit0 (bit2 tn)) (bit2 (bit1 tn))
 
-vn :: Var
+vn :: Var; tn :: Term
 vn = Var (Name ([],"n"),num)
-
-tn :: Term
-tn  = VarTerm vn
+tn = VarTerm vn
 
 data Direction = N2B | B2N
 data Rule = Conv | Rule
