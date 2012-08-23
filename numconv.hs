@@ -84,16 +84,16 @@ defaultOptions = Options
 
 options :: [OptDescr (Options -> Options)]
 options =
-  [ Option ['r'] ["rule"] (NoArg (\o -> o {rule = Rule, help = False})) "return t |- t' instead of |- t = t'"
-  , Option ['c'] ["conv"] (NoArg (\o -> o {rule = Conv, help = False})) "return |- t = t' (default)"
-  , Option ['n'] ["n2b"] (NoArg (\o -> o {dir = N2B, help = False})) "convert Norrish to binary"
+  [ Option ['n'] ["n2b"] (NoArg (\o -> o {dir = N2B, help = False})) "convert Norrish to binary"
   , Option ['b'] ["b2n"] (NoArg (\o -> o {dir = B2N, help = False})) "convert binary to Norrish"
+  , Option ['c'] ["conv"] (NoArg (\o -> o {rule = Conv, help = False})) "return |- t = t' (default)"
+  , Option ['r'] ["rule"] (NoArg (\o -> o {rule = Rule, help = False})) "return t |- t' instead of |- t = t'"
   , Option ['h'] ["help"] (NoArg (\o -> o {help = True})) "print this help"
   ]
 
 usage :: String
 usage = flip usageInfo options $
-  unlines
+  init $ unlines
     ["usage: numconv (-n | -b) [-rc]"
     ,"converts numerals between binary and Norrish encodings"
     ,"reads article from stdin and writes article to stdout"
