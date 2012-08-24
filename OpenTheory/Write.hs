@@ -7,7 +7,7 @@ import Control.Monad.State (StateT,get,put,liftIO)
 import System.IO (Handle,hPutStr,hPutStrLn)
 import qualified Data.List as List (map)
 import Prelude hiding (log,map)
-import OpenTheory.Name (Name(Name),logNamespace,logComponent)
+import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(..),TypeOp(TypeOp))
 import OpenTheory.Term (Term(..),Var(Var),Const(Const))
 import OpenTheory.Proof (Proof(..),hyp,concl)
@@ -86,9 +86,7 @@ instance Loggable Name where
   key = OName
   log = hc l where
     l (Name (ns,n)) = do
-      logRaw "\""
-      logNamespace logRaw ns
-      logComponent logRaw n
+      logRaw $ "\""++show ns++show n
       logRawLn "\""
 
 instance Loggable TypeOp where

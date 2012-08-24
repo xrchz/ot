@@ -6,8 +6,7 @@ import System.Exit (exitSuccess,exitFailure)
 import System.Environment (getArgs)
 import System.Console.GetOpt (getOpt,ArgOrder(Permute),usageInfo,ArgDescr(NoArg),OptDescr(Option))
 import Prelude hiding (getLine,map)
-import OpenTheory.Name (Name(..))
-import OpenTheory.Term (Term(..),Var(..))
+import OpenTheory.Term (Term(VarTerm),Var,var)
 import OpenTheory.Equality (rhs)
 import OpenTheory.Proof (Proof(Refl,AppThm),axiom,concl)
 import OpenTheory.Proof (Proof(EqMp))
@@ -58,8 +57,8 @@ bit0Bit1Bit2Bit0 = axiom $ forall vn $ eq (bit0 (bit1 tn)) (bit2 (bit0 tn))
 bit0Bit2Bit2Bit1 = axiom $ forall vn $ eq (bit0 (bit2 tn)) (bit2 (bit1 tn))
 
 vn :: Var; tn :: Term
-vn = Var (Name ([],"n"),num)
-tn = VarTerm vn
+vn = var "n" num
+tn  = VarTerm vn
 
 data Direction = N2B | B2N
 data Rule = Conv | Rule

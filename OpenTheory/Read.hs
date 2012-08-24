@@ -12,7 +12,6 @@ import Data.Dynamic (Dynamic)
 import Control.Exception (Exception,try,throwIO,throw,catch)
 import Control.Monad.State (StateT,get,put,liftIO)
 import System.IO (Handle,hGetLine)
-import OpenTheory.Name (Name(Name))
 import OpenTheory.Type (Type(..),TypeOp(TypeOp))
 import OpenTheory.Term (Term(..),Var(Var),Const(Const),rand)
 import OpenTheory.Proof (Proof(Axiom,Assume,AbsThm,EqMp,Refl,Subst,AppThm,DeductAntisym,BetaConv))
@@ -39,22 +38,6 @@ addThm th = do
 
 getLine :: RM (Either IOError String)
 getLine = get >>= (liftIO . try . hGetLine . handle)
-
--- in the absence of Data.DList...
-type DList a = [a]
-empty :: DList a
-empty = []
-toList :: DList a -> [a]
-toList ls = ls
-snoc :: DList a -> a -> DList a
-snoc ls x = ls ++ [x]
-
-readName :: String -> Name
-readName s = r s empty empty where
-  r [] ns n = Name (toList ns, toList n)
-  r ('\\':c:cs) ns n = r cs ns (snoc n c)
-  r ('.':cs) ns n = r cs (snoc ns (toList n)) empty
-  r (c:cs) ns n = r cs ns (snoc n c)
 
 data TermEx = TermEx Term
   deriving (Show, Typeable)
@@ -88,7 +71,7 @@ readArticle axiom handleError handleEOF = loop where
         rm = case line of
           '"':s -> do
             st <- getStack
-            putStack $ OName (readName (init s)) : st
+            putStack $ OName (read (init s)) : st
           s@(c:_) | isDigit c || c == '-' -> do
             st <- getStack
             putStack $ ONum (read s) : st

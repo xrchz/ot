@@ -1,37 +1,74 @@
-module OpenTheory.Name (Name(Name),Component,name,nsMin,logNamespace,logComponent) where
-import Control.Monad.State (evalState,get,put)
+-- |
+-- Module      : $Header$
+-- Copyright   : 2012, Ramana Kumar
+-- License     : GPL
+-- 
+-- Maintainer  : ramana@xrchz.net
+-- Stability   : experimental
+-- Portability : portable
+-- 
+-- OpenTheory names (used to name constants and variables).
+module OpenTheory.Name (
+  Name(Name), Namespace(Namespace), Component(Component),
+  name, namespace,
+  nsMin) where
+import Text.Read (Read(readPrec))
+import Text.ParserCombinators.ReadPrec (lift,readPrec_to_P,minPrec)
+import Text.ParserCombinators.ReadP (many,char,satisfy,(<++),endBy,eof)
 
-type Component = String
+newtype Component = Component String
+  deriving (Eq, Ord)
 
-type Namespace = [Component]
+newtype Namespace = Namespace [Component]
+  deriving (Eq, Ord)
 
+-- |
+-- Names consist of a namespace and a base component.
+-- For example the true boolean constant is named by @Data.Bool.T@.
+-- Here, @Data.Bool@ is the namespace, and @T@ is the base component.
 newtype Name = Name (Namespace, Component)
   deriving (Eq, Ord)
 
-name :: Namespace -> Component -> Name
-name = curry Name
+-- |A convenience function for creating names.
+name :: Namespace -> String -> Name
+name ns s = Name (ns, Component s)
 
-nsMin :: Component -> Name
-nsMin = name []
+-- |A convenience function for creating namespaces.
+namespace :: [String] -> Namespace
+namespace = Namespace . map Component
 
-logComponent :: Monad m => (String -> m ()) -> Component -> m ()
-logComponent lr = lc where
-  lc [] = return ()
-  lc (x:xs) = do
-    if elem x ".\"\\" then lr "\\" else return ()
-    lr [x]
-    lc xs
+-- |Generates a name in the @min@ (empty) namespace.
+nsMin :: String -> Name
+nsMin = name (namespace [])
 
-logNamespace :: Monad m => (String -> m ()) -> Namespace -> m ()
-logNamespace lr = ln where
-  ln [] = return ()
-  ln (c:ns) = do
-    lc c
-    lr "."
-    ln ns
-  lc = logComponent lr
+escaped :: Char -> Bool
+escaped = flip elem ".\'\\"
+
+instance Show Component where
+  showsPrec _ (Component s) = showStr s where
+    showStr [] = id
+    showStr (x:xs) = escape . showChar x . showStr xs where
+      escape = if escaped x then showChar '\\' else id
+
+instance Read Component where
+  readPrec = lift readString >>= return . Component where
+    readString = many $ (char '\\' >> satisfy escaped) <++ satisfy (not . escaped)
+
+instance Show Namespace where
+  showsPrec _ (Namespace []) = id
+  showsPrec d (Namespace (c:cs)) =
+    showsPrec d c . showChar '.' . showsPrec d (Namespace cs)
+
+instance Read Namespace where
+  readPrec = lift readComponents >>= return . Namespace where
+    readComponents = endBy (readPrec_to_P readPrec minPrec) (char '.')
 
 instance Show Name where
-  show (Name (_,n)) = evalState c "" where
-    c = (logComponent l n) >> get
-    l s2 = get >>= (\s1 -> put (s1 ++ s2))
+  showsPrec d (Name (ns,c)) = showsPrec d ns . showsPrec d c
+
+instance Read Name where
+  readPrec = lift $ do
+    ns <- readPrec_to_P readPrec minPrec
+    c <- readPrec_to_P readPrec minPrec
+    eof
+    return $ Name (ns,c)

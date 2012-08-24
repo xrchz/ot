@@ -1,12 +1,12 @@
 module OpenTheory.Bool (nsBool,truth,forall,forall_def) where
-import OpenTheory.Name (Name(Name),Component,name)
+import OpenTheory.Name (Name(),name,namespace)
 import OpenTheory.Type (Type(),(-->),bool,alpha)
-import OpenTheory.Term (Term(..),Var(Var),Const(Const))
+import OpenTheory.Term (Term(..),Var(Var),var,Const(Const))
 import OpenTheory.Equality (eq)
 import OpenTheory.Proof (Proof(),axiom)
 
-nsBool :: Component -> Name
-nsBool = name ["Data","Bool"]
+nsBool :: String -> Name
+nsBool = name (namespace ["Data","Bool"])
 
 truth :: Term
 truth = ConstTerm (Const (nsBool "T")) bool
@@ -26,5 +26,5 @@ forall_def = axiom
         (VarTerm p)
         (AbsTerm x truth))))
   where
-    x = Var (Name ([],"x"),alpha)
-    p = Var (Name ([],"P"),alpha --> bool)
+    x = var "x" $ alpha
+    p = var "P" $ alpha --> bool

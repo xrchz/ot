@@ -1,14 +1,17 @@
-module OpenTheory.Term (Term(..),Var(Var),Const(Const),typeOf,rator,rand,subst,substType) where
+module OpenTheory.Term (Term(..),Var(Var),var,Const(Const),typeOf,rator,rand,subst,substType) where
 import Data.Set (Set)
 import qualified Data.Set as Set (singleton,empty,union,delete,member)
 import Data.Map (Map,findWithDefault,delete,singleton,insert)
-import OpenTheory.Name (Name(Name),nsMin)
+import OpenTheory.Name (Name(Name),Component(Component),nsMin)
 import OpenTheory.Type (Type(OpType),(-->),fun)
 import qualified OpenTheory.Type as Type (subst)
 import Prelude hiding (lex)
 
 newtype Var = Var (Name, Type)
   deriving (Eq, Ord)
+
+var :: String -> Type -> Var
+var s ty = Var(nsMin s,ty)
 
 newtype Const = Const Name
   deriving (Eq, Ord)
@@ -55,17 +58,29 @@ instance Eq Term where
   t1 == t2 = compare t1 t2 == EQ
 
 instance Show Var where
-  show (Var(n,ty)) = "("++(show n)++":"++(show ty)++")"
+  showsPrec d (Var(n,ty)) = showParen (d > prec) $
+    showsPrec (prec+1) n .
+    showChar ':' .
+    showsPrec (prec+1) ty
+    where prec = 1
 
 instance Show Const where
-  show (Const n) = show n
+  showsPrec d (Const n) = showsPrec d n
 
 instance Show Term where
-  show (AbsTerm v b) = "(\\"++(show v)++". "++(show b)++")"
-  show (AppTerm (AppTerm (ConstTerm (Const (Name([],"="))) _) l) r) = "("++(show l)++" = "++(show r)++")"
-  show (AppTerm t1 t2) = "("++(show t1)++" "++(show t2)++")"
-  show (ConstTerm c _) = show c
-  show (VarTerm v) = show v
+  showsPrec d (AbsTerm v b) = showParen (d > prec) $
+    showChar '\\' .
+    showsPrec d v .
+    showChar '.' .
+    showsPrec (prec+1) b
+    where prec = 1
+  showsPrec d (AppTerm t1 t2) = showParen (d > prec) $
+    showsPrec (prec+1) t1 .
+    showChar ' ' .
+    showsPrec (prec+1) t2
+    where prec = 2
+  showsPrec d (ConstTerm c _) = showsPrec d c
+  showsPrec d (VarTerm v) = showsPrec d v
 
 typeOf :: Term -> Type
 typeOf (VarTerm (Var (_,ty))) = ty
@@ -88,7 +103,7 @@ freeVars (AppTerm t1 t2) = freeVars t1 `Set.union` freeVars t2
 freeVars (AbsTerm v b) = Set.delete v $ freeVars b
 
 vary :: Var -> Var
-vary (Var (Name(ns,n),ty)) = Var (Name(ns,' ':n),ty)
+vary (Var (Name(ns,Component n),ty)) = Var (Name(ns,Component$' ':n),ty)
 
 variant :: Set Var -> Var -> Var
 variant avoid = f where
