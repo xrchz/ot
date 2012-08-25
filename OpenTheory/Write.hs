@@ -4,7 +4,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set (toAscList)
 import qualified Data.Map as Map (toAscList,lookup,size,insert)
 import Control.Monad.State (StateT,get,put,liftIO)
-import System.IO (Handle,hPutStr,hPutStrLn)
+import System.IO (Handle,hPutStrLn)
 import qualified Data.List as List (map)
 import Prelude hiding (log,map)
 import OpenTheory.Name (Name(Name))
@@ -30,8 +30,7 @@ class Loggable a where
   key :: a -> Object
   log :: a -> WM ()
 
-logRaw, logRawLn :: String -> WM ()
-logRaw s   = getField handle >>= liftIO . flip hPutStr s
+logRawLn :: String -> WM ()
 logRawLn s = getField handle >>= liftIO . flip hPutStrLn s
 
 logCommand :: String -> WM ()
@@ -85,9 +84,10 @@ instance (Loggable k, Loggable v) => Loggable (Map k v) where
 instance Loggable Name where
   key = OName
   log = hc l where
-    l (Name (ns,n)) = do
-      logRaw $ "\""++show ns++show n
-      logRawLn "\""
+    l (Name (ns,n)) =
+      logRawLn $ showChar '\"' $
+        shows ns $ shows n $
+        showChar '\"' ""
 
 instance Loggable TypeOp where
   key = OTypeOp
