@@ -1,4 +1,22 @@
-module OpenTheory.Term (Term(..),Var(Var),var,Const(Const),typeOf,rator,rand,subst,substType) where
+-- |
+-- Module      : $Header$
+-- Copyright   : 2012, Ramana Kumar
+-- License     : GPL
+-- 
+-- Maintainer  : ramana@xrchz.net
+-- Stability   : experimental
+-- Portability : non-portable (uses OpenTheory.Name)
+-- 
+-- OpenTheory terms.
+module OpenTheory.Term
+( Term(..)
+, Var(Var)
+, var
+, Const(Const)
+, typeOf
+, subst, substType
+, rator, rand
+) where
 import Data.Set (Set)
 import qualified Data.Set as Set (singleton,empty,union,delete,member)
 import Data.Map (Map,findWithDefault,delete,singleton,insert)
@@ -10,6 +28,7 @@ import Prelude hiding (lex)
 newtype Var = Var (Name, Type)
   deriving (Eq, Ord)
 
+-- |Convenience function for building variables.
 var :: String -> Type -> Var
 var s ty = Var(nsMin s,ty)
 
@@ -90,6 +109,7 @@ typeOf tm@(AppTerm f _) = case typeOf f of
   ty -> error ("bad type: "++show ty++"\nfor rator of: "++show tm)
 typeOf (AbsTerm (Var (_,x)) t) = x --> (typeOf t)
 
+-- |Get a component of an application.
 rator, rand :: Term -> Term
 rator (AppTerm f _) = f
 rator tm = error ("rator " ++ show tm)
@@ -110,6 +130,7 @@ variant avoid = f where
   f v | Set.member v avoid = f (vary v)
   f v = v
 
+-- |Substitute for variables within a term.
 subst :: Map Var Term -> Term -> Term
 subst s v@(VarTerm k) = findWithDefault v k s
 subst _ c@(ConstTerm _ _) = c
@@ -124,6 +145,7 @@ subst s (AbsTerm v b) = AbsTerm v' (subst s' b) where
 varSubstType :: Map Name Type -> Var -> Var
 varSubstType s (Var (n,ty)) = Var (n,Type.subst s ty)
 
+-- |Substitute for type variables within a term.
 substType :: Map Name Type -> Term -> Term
 substType s (VarTerm v) = VarTerm (varSubstType s v)
 substType s (ConstTerm n ty) = ConstTerm n (Type.subst s ty)

@@ -5,41 +5,45 @@
 -- 
 -- Maintainer  : ramana@xrchz.net
 -- Stability   : experimental
--- Portability : portable
+-- Portability : non-portable (uses Text.ParserCombinators.ReadPrec)
 -- 
 -- OpenTheory names (used to name constants and variables).
-module OpenTheory.Name (
-  Name(Name), Namespace(Namespace), Component(Component),
-  name, namespace,
-  nsMin) where
+module OpenTheory.Name
+( Name(Name)
+, name
+, nsMin
+, Namespace(Namespace)
+, namespace
+, Component(Component)
+) where
 import Text.Read (Read(readPrec))
 import Text.ParserCombinators.ReadPrec (lift,readPrec_to_P,minPrec)
 import Text.ParserCombinators.ReadP (many,char,satisfy,(<++),endBy,eof)
 
-newtype Component = Component String
+-- |
+-- Names consist of a namespace and a base component.
+-- For example the true boolean constant is named by @Data.Bool.T@.
+-- Here, @[Data,Bool]@ is the namespace, and @T@ is the base component.
+newtype Name = Name (Namespace, Component)
   deriving (Eq, Ord)
+
+-- |Convenience function for building names.
+name :: Namespace -> String -> Name
+name ns s = Name (ns, Component s)
+
+-- |Generate a name in the @min@ (empty) namespace.
+nsMin :: String -> Name
+nsMin = name (namespace [])
 
 newtype Namespace = Namespace [Component]
   deriving (Eq, Ord)
 
--- |
--- Names consist of a namespace and a base component.
--- For example the true boolean constant is named by @Data.Bool.T@.
--- Here, @Data.Bool@ is the namespace, and @T@ is the base component.
-newtype Name = Name (Namespace, Component)
-  deriving (Eq, Ord)
-
--- |A convenience function for creating names.
-name :: Namespace -> String -> Name
-name ns s = Name (ns, Component s)
-
--- |A convenience function for creating namespaces.
+-- |Convenience function for building namespaces.
 namespace :: [String] -> Namespace
 namespace = Namespace . map Component
 
--- |Generates a name in the @min@ (empty) namespace.
-nsMin :: String -> Name
-nsMin = name (namespace [])
+newtype Component = Component String
+  deriving (Eq, Ord)
 
 escaped :: Char -> Bool
 escaped = flip elem ".\'\\"
