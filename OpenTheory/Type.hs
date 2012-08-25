@@ -1,13 +1,4 @@
--- |
--- Module      : $Header$
--- Copyright   : 2012, Ramana Kumar
--- License     : GPL
--- 
--- Maintainer  : ramana@xrchz.net
--- Stability   : experimental
--- Portability : non-portable (uses OpenTheory.Name)
--- 
--- OpenTheory types.
+-- |Types.
 module OpenTheory.Type
 ( Type(..)
 , TypeOp(TypeOp)

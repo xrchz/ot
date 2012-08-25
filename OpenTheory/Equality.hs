@@ -1,13 +1,6 @@
 -- |
--- Module      : $Header$
--- Copyright   : 2012, Ramana Kumar
--- License     : GPL
--- 
--- Maintainer  : ramana@xrchz.net
--- Stability   : experimental
--- Portability : non-portable (uses OpenTheory.Name)
--- 
--- OpenTheory equality terms. Equality is the only constant required to define the proof system in "OpenTheory.Proof".
+-- Equality terms.
+-- Equality is the only constant required to define the proof system in "OpenTheory.Proof".
 module OpenTheory.Equality (eq,rhs,destEq,destEqTy) where
 import OpenTheory.Name (nsMin)
 import OpenTheory.Type (Type(),(-->),bool,dom)

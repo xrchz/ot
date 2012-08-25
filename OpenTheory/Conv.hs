@@ -1,4 +1,5 @@
-module OpenTheory.Conv (depthConv) where
+-- |Conversions: building theorems from terms.
+module OpenTheory.Conv (Conv,depthConv) where
 import Control.Monad (mzero,mplus)
 import OpenTheory.Term (Term(AppTerm,AbsTerm))
 import OpenTheory.Proof (Proof(Refl,AppThm,AbsThm))

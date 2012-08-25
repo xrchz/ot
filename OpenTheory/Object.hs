@@ -1,3 +1,4 @@
+-- |Objects: virtual machine data.
 module OpenTheory.Object (Object(..)) where
 import OpenTheory.Name (Name())
 import OpenTheory.Type (Type(),TypeOp())

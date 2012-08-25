@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+-- |Article reader.
 module OpenTheory.Read (RM,ReadState(..),readArticle,defaultAxiom,defaultHandler,thmsOnEOF,readTerm,putStack) where
 import Data.Map (Map)
 import qualified Data.Map as Map (lookup,insert,delete,fromList)

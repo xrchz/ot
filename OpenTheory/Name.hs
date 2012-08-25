@@ -1,13 +1,4 @@
--- |
--- Module      : $Header$
--- Copyright   : 2012, Ramana Kumar
--- License     : GPL
--- 
--- Maintainer  : ramana@xrchz.net
--- Stability   : experimental
--- Portability : non-portable (uses Text.ParserCombinators.ReadPrec)
--- 
--- OpenTheory names (used to name constants and variables).
+-- |Names for constants and variables.
 module OpenTheory.Name
 ( Name(Name)
 , name

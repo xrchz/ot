@@ -1,0 +1,34 @@
+name:          OpenTheory
+version:       0.0
+synopsis:      Higher order logic proof sharing
+homepage:      http://www.gilith.com/research/opentheory/
+author:        Ramana Kumar
+copyright:     2012 Ramana Kumar
+license:       GPL
+license-file:  COPYING
+maintainer:    ramana@member.fsf.org
+build-type:    Simple
+cabal-version: >= 1.14.0
+
+library
+  default-language: Haskell2010
+  build-depends:    base, containers, transformers, mtl
+  ghc-options:      -O3 -Wall
+  exposed-modules:  OpenTheory.Name,
+                    OpenTheory.Type,
+                    OpenTheory.Term,
+                    OpenTheory.Equality,
+                    OpenTheory.Proof,
+                    OpenTheory.Rule,
+                    OpenTheory.Conv,
+                    OpenTheory.Read,
+                    OpenTheory.Write,
+                    OpenTheory.Bool,
+                    OpenTheory.Natural,
+                    OpenTheory.Natural.Numeral
+
+executable numconv
+  default-language: Haskell2010
+  build-depends:    base, containers, transformers, mtl
+  ghc-options:      -O3 -Wall
+  main-is:          numconv.hs

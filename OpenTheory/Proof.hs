@@ -1,4 +1,10 @@
-module OpenTheory.Proof (Proof(..),concl,hyp,axiom) where
+-- |Theorems, represented by proof trees.
+module OpenTheory.Proof
+( Proof(..)
+, concl
+, hyp
+, axiom
+) where
 import Data.Set (Set)
 import qualified Data.Set as Set (empty,union,delete,singleton,map)
 import Data.Map (Map,singleton)
@@ -8,6 +14,7 @@ import OpenTheory.Term (Term(AppTerm,AbsTerm),Var(Var),typeOf,substType)
 import qualified OpenTheory.Term as Term (subst)
 import OpenTheory.Equality (eq,rhs,destEq,destEqTy)
 
+-- | There is a constructor for each primitive rule of inference in the OpenTheory kernel. (Currently some are missing.)
 data Proof =
     AbsThm Var Proof
   | AppThm Proof Proof
@@ -22,6 +29,7 @@ data Proof =
 substBoth :: (Map Name Type, Map Var Term) -> Term -> Term
 substBoth (sty,stm) = Term.subst stm . substType sty
 
+-- | Conclusion of the proved theorem.
 concl :: Proof -> Term
 concl (Assume t) = t
 concl (Refl t) = eq (typeOf t) t t
@@ -41,6 +49,7 @@ concl (BetaConv tm) = case tm of
 concl (Subst s th) = substBoth s (concl th)
 concl (DeductAntisym th1 th2) = eq bool (concl th1) (concl th2)
 
+-- | Hypotheses of the proved theorem.
 hyp :: Proof -> Set Term
 hyp (Assume t) = Set.singleton t
 hyp (Refl _) = Set.empty
@@ -67,5 +76,6 @@ instance Eq Proof where
 instance Show Proof where
   show th = show (hyp th) ++ " |- " ++ show (concl th)
 
+-- | Create an axiom (without hypotheses).
 axiom :: Term -> Proof
 axiom = Axiom Set.empty

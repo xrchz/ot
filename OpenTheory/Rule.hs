@@ -1,3 +1,4 @@
+-- |Derived inference rules.
 module OpenTheory.Rule (trans,sym,spec,proveHyp,subs) where
 import Data.Map (singleton,empty)
 import OpenTheory.Type (alpha_nm)

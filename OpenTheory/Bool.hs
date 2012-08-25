@@ -1,3 +1,4 @@
+-- |Boolean terms.
 module OpenTheory.Bool (nsBool,truth,forall,forall_def) where
 import OpenTheory.Name (Name(),name,namespace)
 import OpenTheory.Type (Type(),(-->),bool,alpha)
