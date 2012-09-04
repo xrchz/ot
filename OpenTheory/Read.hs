@@ -1,17 +1,19 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 -- |Article reader.
-module OpenTheory.Read (RM,ReadState(..),readArticle,defaultAxiom,defaultHandler,thmsOnEOF,readTerm,putStack) where
+module OpenTheory.Read (RM,ReadState(..),readArticle,defaultAxiom,defaultHandler,thmsOnEOF,readTerm,putStack,evalRM) where
 import Data.Map (Map)
-import qualified Data.Map as Map (lookup,insert,delete,fromList)
+import qualified Data.Map as Map (lookup,insert,delete,fromList,empty)
 import qualified Data.Set as Set (fromList)
 import qualified Data.List as List (map,foldl')
 import Data.Maybe (fromJust)
 import Data.Char (isDigit)
-import Control.Monad.Trans.State (liftCatch)
+import qualified Control.Monad.Trans.State as State (liftCatch)
+import qualified Control.Monad.Trans.Reader as Reader (liftCatch)
 import Data.Typeable (Typeable)
 import Data.Dynamic (Dynamic)
 import Control.Exception (Exception,try,throwIO,throw,catch)
-import Control.Monad.State (StateT,get,put,liftIO)
+import Control.Monad.State (StateT,get,put,liftIO,evalStateT)
+import Control.Monad.Reader (ReaderT,lift,ask,runReaderT)
 import System.IO (Handle,hGetLine)
 import OpenTheory.Type (Type(..),TypeOp(TypeOp))
 import OpenTheory.Term (Term(..),Var(Var),Const(Const),rand)
@@ -20,9 +22,21 @@ import OpenTheory.Object (Object(..))
 import OpenTheory.Rule (proveHyp)
 import Prelude hiding (log,map,getLine,catch)
 
-data ReadState = ReadState {handle :: Handle, map :: Map Int Object, stack :: [Object], thms :: [Proof]}
+data ReadState = ReadState {map :: Map Int Object, stack :: [Object], thms :: [Proof]}
 
-type RM = StateT ReadState IO
+type RM = StateT ReadState (ReaderT Handle IO)
+
+catchRM :: Exception e => RM a -> (e -> RM a) -> RM a
+catchRM = State.liftCatch $ Reader.liftCatch catch
+
+evalRMState :: RM a -> Handle -> ReadState -> IO a
+evalRMState m h s = flip runReaderT h $ evalStateT m s
+
+initialState :: ReadState
+initialState = ReadState {map = Map.empty, stack = [], thms = []}
+
+evalRM :: RM a -> Handle -> IO a
+evalRM m h = evalRMState m h initialState
 
 getStack :: RM [Object]
 getStack = get >>= return . stack
@@ -38,7 +52,7 @@ addThm th = do
   put $ (s {thms = th : (thms s)})
 
 getLine :: RM (Either IOError String)
-getLine = get >>= (liftIO . try . hGetLine . handle)
+getLine = lift ask >>= (liftIO . try . hGetLine)
 
 data TermEx = TermEx Term
   deriving (Show, Typeable)
@@ -68,7 +82,7 @@ readArticle axiom handleError handleEOF = loop where
     result <- getLine
     case result of
       Left _ -> handleEOF
-      Right line -> liftCatch catch (rm >> loop) handleError where
+      Right line -> catchRM (rm >> loop) handleError where
         rm = case line of
           '"':s -> do
             st <- getStack

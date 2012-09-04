@@ -1,6 +1,4 @@
-import qualified Data.Map as Map (empty)
 import Data.Maybe (fromJust)
-import Control.Monad.State (evalStateT)
 import System.IO (stdin,stdout,stderr,hPutStr)
 import System.Exit (exitSuccess,exitFailure)
 import System.Environment (getArgs)
@@ -15,10 +13,8 @@ import OpenTheory.Conv (depthConv)
 import OpenTheory.Bool (forall)
 import OpenTheory.Natural (num,eq)
 import OpenTheory.Natural.Numeral (Norrish(..),Binary(..),n2t,t2n,b2t,t2b,bit1,bit0,bit2,bit0_tm,bit1_tm,zero,suc)
-import OpenTheory.Read (ReadState(ReadState),readTerm)
-import qualified OpenTheory.Read as R (ReadState(..))
-import OpenTheory.Write (WM,WriteState(WriteState),logThm)
-import qualified OpenTheory.Write as W (WriteState(..))
+import OpenTheory.Read (readTerm,evalRM)
+import OpenTheory.Write (WM,logThm,evalWM)
 
 -- n2b n[Nor] = |- n[Nor] = n[Bin]
 n2b :: Norrish -> Proof
@@ -106,7 +102,5 @@ main = do
       (o,[],[]) -> return $ foldl (flip id) defaultOptions o
       (_,_,errs) -> hPutStr stderr (concat errs ++ usage) >> exitFailure
   case opts of { Options {help=True} -> putStr usage >> exitSuccess ; _ -> return () }
-  let rs = ReadState {R.handle=stdin, R.map=Map.empty, R.stack=[], R.thms=[]}
-  tm <- evalStateT readTerm rs
-  let ws = WriteState {W.handle=stdout, W.map=Map.empty}
-  evalStateT (write opts tm) ws
+  tm <- evalRM readTerm stdin
+  evalWM (write opts tm) stdout

@@ -1,10 +1,11 @@
 -- |Article writer.
-module OpenTheory.Write (Loggable,WM,WriteState(..),logRawLn,logThm) where
+module OpenTheory.Write (Loggable,WM,logRawLn,logThm,evalWM) where
 import Data.Map (Map)
 import Data.Set (Set)
 import qualified Data.Set as Set (toAscList)
-import qualified Data.Map as Map (toAscList,lookup,size,insert)
-import Control.Monad.State (StateT,get,put,liftIO)
+import qualified Data.Map as Map (toAscList,lookup,size,insert,empty)
+import Control.Monad.State (StateT,get,put,liftIO,evalStateT)
+import Control.Monad.Reader (ReaderT,lift,ask,runReaderT)
 import System.IO (Handle,hPutStrLn)
 import qualified Data.List as List (map)
 import Prelude hiding (log,map)
@@ -14,25 +15,25 @@ import OpenTheory.Term (Term(..),Var(Var),Const(Const))
 import OpenTheory.Proof (Proof(..),hyp,concl)
 import OpenTheory.Object (Object(..))
 
--- should use the reader monad for immutable state
-data WriteState = WriteState {handle :: Handle, map :: Map Object Int}
+type WriteState = Map Object Int
 
-type WM a = StateT WriteState IO a
+type WM = StateT WriteState (ReaderT Handle IO)
 
-getField :: (WriteState -> a) -> WM a
-getField f = get >>= return . f
+evalWMState :: WM a -> Handle -> WriteState -> IO a
+evalWMState m h s = flip runReaderT h $ evalStateT m s
 
-putMap :: Map Object Int -> WM ()
-putMap m = do
-  s <- get
-  put (s {map = m})
+initialState :: WriteState
+initialState = Map.empty
+
+evalWM :: WM a -> Handle -> IO a
+evalWM m h = evalWMState m h initialState
 
 class Loggable a where
   key :: a -> Object
   log :: a -> WM ()
 
 logRawLn :: String -> WM ()
-logRawLn s = getField handle >>= liftIO . flip hPutStrLn s
+logRawLn s = lift ask >>= liftIO . flip hPutStrLn s
 
 logCommand :: String -> WM ()
 logCommand = logRawLn
@@ -42,18 +43,18 @@ logNum = logCommand . show
 
 hc :: Loggable a => (a -> WM ()) -> a -> WM ()
 hc logA a = do
-  m0 <- getField map
+  m0 <- get
   case Map.lookup (key a) m0 of
     Just k -> do
       logNum k
       logCommand "ref"
     Nothing -> do
       logA a
-      m <- getField map
+      m <- get
       let k = Map.size m
       logNum k
       logCommand "def"
-      putMap (Map.insert (key a) k m)
+      put (Map.insert (key a) k m)
 
 instance Loggable a => Loggable [a] where
   key = OList . (List.map key)
