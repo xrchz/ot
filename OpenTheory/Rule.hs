@@ -5,7 +5,7 @@ import OpenTheory.Type (alpha_nm)
 import OpenTheory.Term (Term(AppTerm),rator,rand,typeOf)
 import OpenTheory.Equality (rhs)
 import OpenTheory.Proof (Proof(..),axiom,concl)
-import OpenTheory.Bool (truth,forall_def)
+import OpenTheory.Bool (true,forall_def)
 
 -- subs n (x = y) (|- l = r[x]) = |- l = r[y]
 -- assumes x is the nth operand of r
@@ -29,7 +29,7 @@ sym th = EqMp lel_rel lel
     ler = th
 
 spec :: Term -> Proof -> Proof
-spec tm th = EqMp (sym pv_T) (axiom truth)
+spec tm th = EqMp (sym pv_T) (axiom true)
   where
     pv_T = trans pv_lxPxv (trans lxPxv_lxTv lxTv_T)
     pv_lxPxv = sym (BetaConv lxPxv) -- P[v] = (\x. P[x]) v
