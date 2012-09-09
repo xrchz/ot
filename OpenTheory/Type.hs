@@ -11,9 +11,11 @@ module OpenTheory.Type
 import Data.Map (Map,findWithDefault)
 import OpenTheory.Name (Name(),nsMin)
 
+-- |A type operator is identified by its name.
 newtype TypeOp = TypeOp Name
   deriving (Eq, Ord)
 
+-- |Higher-order logic types.
 data Type =
     OpType TypeOp [Type] -- ^ type application
   | VarType Name         -- ^ type variable
@@ -43,8 +45,9 @@ subst :: Map Name Type -> Type -> Type
 subst s v@(VarType k) = findWithDefault v k s
 subst s (OpType op args) = OpType op (map (subst s) args)
 
--- |Commonly-used type variable.
+-- |Commonly-used type variable
 alpha :: Type; alpha_nm :: Name
+-- |and its name.
 alpha_nm = nsMin "A"
 alpha = VarType alpha_nm
 

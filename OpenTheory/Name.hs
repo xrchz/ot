@@ -26,6 +26,7 @@ name ns s = Name (ns, Component s)
 nsMin :: String -> Name
 nsMin = name (namespace [])
 
+-- |A namespace is a sequence of leading components.
 newtype Namespace = Namespace [Component]
   deriving (Eq, Ord)
 
@@ -33,6 +34,7 @@ newtype Namespace = Namespace [Component]
 namespace :: [String] -> Namespace
 namespace = Namespace . map Component
 
+-- |A component is a string.
 newtype Component = Component String
   deriving (Eq, Ord)
 

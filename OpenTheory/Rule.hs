@@ -7,19 +7,30 @@ import OpenTheory.Equality (rhs)
 import OpenTheory.Proof (Proof(..),axiom,concl)
 import OpenTheory.Bool (true,forall_def)
 
--- subs n (x = y) (|- l = r[x]) = |- l = r[y]
--- assumes x is the nth operand of r
-subs :: Int -> Proof -> Proof -> Proof
+-- |Substitute for an operand on the right hand side of an equation.
+-- Assumes @x@ is the @n@th operand of @r@.
+subs
+  :: Int    -- ^ n
+  -> Proof  -- ^ x = y
+  -> Proof  -- ^ H |- l = r[x]
+  -> Proof  -- ^ H |- l = r[y]
 subs n eq th = trans th (build n (rhs (concl th))) where
   build 0 _ = eq
   build m (AppTerm f x) = AppThm (Refl f) (build (m-1) x)
   build _ _ = error "subs"
 
-trans :: Proof -> Proof -> Proof
+-- |Transitivity of equality.
+trans
+  :: Proof -- ^ H1 |- x = y
+  -> Proof -- ^ H2 |- y = z
+  -> Proof -- ^ H1 u H2 |- x = z
 trans th1 th2 = EqMp (AppThm (Refl t) th2) th1
   where t = rator (concl th1)
 
-sym :: Proof -> Proof
+-- |Symmetry of equality.
+sym
+  :: Proof -- ^ H |- x = y
+  -> Proof -- ^ H |- y = x
 sym th = EqMp lel_rel lel
   where
     lel_rel = AppThm le_re lel
@@ -28,7 +39,11 @@ sym th = EqMp lel_rel lel
     AppTerm (AppTerm e l) _ = concl th
     ler = th
 
-spec :: Term -> Proof -> Proof
+-- |Specialise a universally quantified theorem.
+spec
+  :: Term  -- ^ t
+  -> Proof -- ^ H |- !x. P[x]
+  -> Proof -- ^ H |- P[t]
 spec tm th = EqMp (sym pv_T) (axiom true)
   where
     pv_T = trans pv_lxPxv (trans lxPxv_lxTv lxTv_T)
@@ -46,5 +61,9 @@ spec tm th = EqMp (sym pv_T) (axiom true)
     ty = typeOf v
     v = tm
 
-proveHyp :: Proof -> Proof -> Proof
+-- |Remove a hypothesis.
+proveHyp
+  :: Proof -- ^ H1 |- P
+  -> Proof -- ^ H2 |- Q
+  -> Proof -- ^ H1 u (H2 / {P}) |- Q
 proveHyp h th = EqMp (DeductAntisym h th) h

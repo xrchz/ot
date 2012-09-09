@@ -4,6 +4,7 @@ import Control.Monad (mzero,mplus)
 import OpenTheory.Term (Term(AppTerm,AbsTerm))
 import OpenTheory.Proof (Proof(Refl,AppThm,AbsThm))
 
+-- |Conversions are often designed to fail (because they perform tests) hence the @Maybe@ return type.
 type Conv = Term -> Maybe Proof
 
 orElseConv :: Conv -> Conv -> Conv
@@ -12,6 +13,7 @@ orElseConv c1 c2 tm = c1 tm `mplus` c2 tm
 tryConv :: Conv -> Conv
 tryConv c = orElseConv c (return . Refl)
 
+-- |Traverse a term top-down, applying a conversion at each subterm, without recursing on the result when it succeeds.
 depthConv :: Conv -> Conv
 depthConv c = c `orElseConv` subConv (depthConv c)
 

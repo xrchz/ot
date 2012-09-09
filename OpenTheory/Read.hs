@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 -- |Article reader.
+-- Implements the virtual machine described at <http://www.gilith.com/research/opentheory/article.html>.
 module OpenTheory.Read (RM,ReadState(..),readArticle,defaultAxiom,defaultHandler,thmsOnEOF,readTerm,putStack,evalRM) where
 import Data.Map (Map)
 import qualified Data.Map as Map (lookup,insert,delete,fromList,empty)
@@ -22,8 +23,14 @@ import OpenTheory.Object (Object(..))
 import OpenTheory.Rule (proveHyp)
 import Prelude hiding (log,map,getLine,catch)
 
+-- |Virtual machine state during article reading.
 data ReadState = ReadState {map :: Map Int Object, stack :: [Object], thms :: [Proof]}
 
+initialState :: ReadState
+initialState = ReadState {map = Map.empty, stack = [], thms = []}
+
+-- |Monad for article reading.
+-- Includes the state of the virtual machine and the handle on the source of article commands.
 type RM = StateT ReadState (ReaderT Handle IO)
 
 catchRM :: Exception e => RM a -> (e -> RM a) -> RM a
@@ -32,15 +39,15 @@ catchRM = State.liftCatch $ Reader.liftCatch catch
 evalRMState :: RM a -> Handle -> ReadState -> IO a
 evalRMState m h s = flip runReaderT h $ evalStateT m s
 
-initialState :: ReadState
-initialState = ReadState {map = Map.empty, stack = [], thms = []}
-
+-- |Run an article-reading action on the supplied source of article commands.
+-- The virtual machine starts in its initial state (everything empty).
 evalRM :: RM a -> Handle -> IO a
 evalRM m h = evalRMState m h initialState
 
 getStack :: RM [Object]
 getStack = get >>= return . stack
 
+-- |Replace the stack in the virtual machine's state.
 putStack :: [Object] -> RM ()
 putStack x = do
   s <- get
@@ -60,12 +67,19 @@ unEx :: TermEx -> Term
 unEx (TermEx t) = t
 instance Exception TermEx
 
+-- |Default action for exceptions: reraise.
 defaultHandler :: Dynamic -> a
 defaultHandler = throw
 
+-- |Default action for axioms: add the desired theorem as an axiom.
 defaultAxiom :: [Term] -> Term -> [Object] -> RM ()
 defaultAxiom h c s = putStack $ OThm (Axiom (Set.fromList h) c) : s
 
+-- |Specialised article reader for reading terms encoded as articles.
+--
+-- The scheme for encoding term @tm@ (of type @ty@) is an article proving only @|- X tm@ (for some @X : ty -> bool@) as an axiom.
+--
+-- @readTerm@ uses an axiom handler that raises an exception to capture the term in the conclusion and interrupt reading.
 readTerm :: RM Term
 readTerm = readArticle throwAxiom (return . rand . unEx) errorOnEOF where
   throwAxiom _ c _ = liftIO $ throwIO (TermEx c)
@@ -73,10 +87,24 @@ readTerm = readArticle throwAxiom (return . rand . unEx) errorOnEOF where
 errorOnEOF :: RM a
 errorOnEOF = error "unexpected EOF"
 
+-- |Default action for end-of-file: return the list of theorems accumulated.
 thmsOnEOF :: RM [Proof]
 thmsOnEOF = get >>= return . thms
 
-readArticle :: Exception e => ([Term] -> Term -> [Object] -> RM ()) -> (e -> RM a) -> RM a -> RM a
+-- |Generic article reader.
+-- Processes article commands and updates the state accordingly.
+--
+-- Parameterised by actions for dealing with the axiom article command, exceptions raised during reading, and when end-of-file is reached.
+--
+-- The axiom action is given the hypotheses and the conclusion of the desired axiom, as well as the current virtual machine stack.
+--
+-- Exceptions can only be raised by the axiom action (or by the underlying @IO@ monad).
+readArticle
+  :: Exception e
+  => ([Term] -> Term -> [Object] -> RM ()) -- ^ axiom handler
+  -> (e -> RM a) -- ^ exception handler
+  -> RM a -- ^ EOF handler
+  -> RM a
 readArticle axiom handleError handleEOF = loop where
   loop = do
     result <- getLine

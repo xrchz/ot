@@ -16,6 +16,7 @@ import OpenTheory.Type (Type(OpType),(-->),fun)
 import qualified OpenTheory.Type as Type (subst)
 import Prelude hiding (lex)
 
+-- |A variable is identified by its name and type.
 newtype Var = Var (Name, Type)
   deriving (Eq, Ord)
 
@@ -23,9 +24,11 @@ newtype Var = Var (Name, Type)
 var :: String -> Type -> Var
 var s ty = Var(nsMin s,ty)
 
+-- |A constant is identified by its name.
 newtype Const = Const Name
   deriving (Eq, Ord)
 
+-- |Higher-order logic terms.
 data Term =
     AbsTerm Var Term
   | AppTerm Term Term
@@ -92,6 +95,7 @@ instance Show Term where
   showsPrec d (ConstTerm c _) = showsPrec d c
   showsPrec d (VarTerm v) = showsPrec d v
 
+-- |Get the type of a term.
 typeOf :: Term -> Type
 typeOf (VarTerm (Var (_,ty))) = ty
 typeOf (ConstTerm _ ty) = ty
